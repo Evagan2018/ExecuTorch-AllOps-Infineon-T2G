@@ -1,0 +1,296 @@
+# Copyright 2026 Arm Limited and/or its affiliates.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# TRAVEO T2G (KIT_T2G-B-H_LITE) Cortex-M0+ port of the all-ops CPU test.
+# Armv6-M has neither MVE nor the DSP extension, so every CMSIS-NN kernel
+# takes its pure-C SCALAR path. The CM0+ is also the T2G's boot core: this
+# image configures the device, runs its own test over the KitProg3 UART and
+# then releases Cortex-M7 core 0 (board_all_ops_done in board_t2g_cm0p.c),
+# whose image runs the same test down the DSP path.
+
+project:
+  device: :Cortex-M0p
+
+  packs:
+    - pack: PyTorch::ExecuTorch
+
+  define:
+    # ET_LOG disabled to keep the thumbv6 image lean (matches the other
+    # physical-target ports of this test).
+    - ET_LOG_ENABLED: 0
+    # The static pools default to a generous FVP/DDR provisioning (see
+    # common/main.cpp). The T2G's 1 MB SRAM is shared by both test images, so
+    # size them down; measured high-water marks ("MemReport:") are ~11 KB.
+    - METHOD_POOL_KB: 128
+    - TEMP_POOL_KB: 32
+    - META_POOL_KB: 16
+    - META_TEMP_POOL_KB: 8
+
+  # Resolve project-local headers (random_device_shim.h) for the -include in
+  # the ExecuTorch pack components.
+  add-path:
+    - .
+    - ../common
+    - ../board/Device_Configurator/GeneratedSource
+
+  # add-path is C/C++ only; the assembler needs add-path-asm so
+  # embedded_models_blob.S resolves its relative `.incbin "models/..."` paths.
+  # This context embeds its OWN M0+ (SCALAR-sized scratch) models.
+  add-path-asm:
+    - .
+
+  generators:
+    options:
+      - generator: InfineonDeviceConfigurator
+        path: ../board/Device_Configurator
+        name: Board
+
+  components:
+    - component: ARM::CMSIS:CORE
+    - component: Infineon::Device:Startup
+    - component: Infineon::Device:Peripheral Driver Library:PDL
+    - component: Infineon::Board Support&KIT_T2G-B-H_LITE:Board Setup
+    - component: Infineon::Device Configurator:Device Configurator
+    - component: ARM::CMSIS-Compiler:CORE
+    - component: ARM::CMSIS-Compiler:STDOUT:Custom
+    - component: ARM::CMSIS-Compiler:STDERR:Custom
+    - component: Machine Learning:ExecuTorch:Runtime
+    - component: Machine Learning:ExecuTorch:Kernel Utils
+    - component: Machine Learning:ExecuTorch:Kernel Registration
+    - component: ARM::CMSIS:NN Lib
+    - component: Machine Learning:ExecuTorch Operators:Portable adaptive_avg_pool2d
+    - component: Machine Learning:ExecuTorch Operators:Portable clone_dim_order
+    - component: Machine Learning:ExecuTorch Operators:Portable conj_physical
+    - component: Machine Learning:ExecuTorch Operators:Portable device_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable empty_dim_order
+    - component: Machine Learning:ExecuTorch Operators:Portable to_dim_order_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable abs
+    - component: Machine Learning:ExecuTorch Operators:Portable acos
+    - component: Machine Learning:ExecuTorch Operators:Portable acosh
+    - component: Machine Learning:ExecuTorch Operators:Portable add
+    - component: Machine Learning:ExecuTorch Operators:Portable addmm
+    - component: Machine Learning:ExecuTorch Operators:Portable alias_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable allclose
+    - component: Machine Learning:ExecuTorch Operators:Portable amax
+    - component: Machine Learning:ExecuTorch Operators:Portable amin
+    - component: Machine Learning:ExecuTorch Operators:Portable any
+    - component: Machine Learning:ExecuTorch Operators:Portable arange
+    - component: Machine Learning:ExecuTorch Operators:Portable argmax
+    - component: Machine Learning:ExecuTorch Operators:Portable argmin
+    - component: Machine Learning:ExecuTorch Operators:Portable as_strided_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable asin
+    - component: Machine Learning:ExecuTorch Operators:Portable asinh
+    - component: Machine Learning:ExecuTorch Operators:Portable atan
+    - component: Machine Learning:ExecuTorch Operators:Portable atan2
+    - component: Machine Learning:ExecuTorch Operators:Portable atanh
+    - component: Machine Learning:ExecuTorch Operators:Portable avg_pool2d
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_and
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_left_shift
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_not
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_or
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_right_shift
+    - component: Machine Learning:ExecuTorch Operators:Portable bitwise_xor
+    - component: Machine Learning:ExecuTorch Operators:Portable bmm
+    - component: Machine Learning:ExecuTorch Operators:Portable cat
+    - component: Machine Learning:ExecuTorch Operators:Portable cdist_forward
+    - component: Machine Learning:ExecuTorch Operators:Portable ceil
+    - component: Machine Learning:ExecuTorch Operators:Portable clamp
+    - component: Machine Learning:ExecuTorch Operators:Portable clone
+    - component: Machine Learning:ExecuTorch Operators:Portable constant_pad_nd
+    - component: Machine Learning:ExecuTorch Operators:Portable convolution
+    - component: Machine Learning:ExecuTorch Operators:Portable convolution_backward
+    - component: Machine Learning:ExecuTorch Operators:Portable copy
+    - component: Machine Learning:ExecuTorch Operators:Portable cos
+    - component: Machine Learning:ExecuTorch Operators:Portable cosh
+    - component: Machine Learning:ExecuTorch Operators:Portable cumsum
+    - component: Machine Learning:ExecuTorch Operators:Portable detach_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable diagonal_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable div
+    - component: Machine Learning:ExecuTorch Operators:Portable elu
+    - component: Machine Learning:ExecuTorch Operators:Portable embedding
+    - component: Machine Learning:ExecuTorch Operators:Portable empty
+    - component: Machine Learning:ExecuTorch Operators:Portable eq
+    - component: Machine Learning:ExecuTorch Operators:Portable erf
+    - component: Machine Learning:ExecuTorch Operators:Portable exp
+    - component: Machine Learning:ExecuTorch Operators:Portable expand_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable expm1
+    - component: Machine Learning:ExecuTorch Operators:Portable fill
+    - component: Machine Learning:ExecuTorch Operators:Portable flip
+    - component: Machine Learning:ExecuTorch Operators:Portable floor
+    - component: Machine Learning:ExecuTorch Operators:Portable floor_divide
+    - component: Machine Learning:ExecuTorch Operators:Portable fmod
+    - component: Machine Learning:ExecuTorch Operators:Portable full
+    - component: Machine Learning:ExecuTorch Operators:Portable full_like
+    - component: Machine Learning:ExecuTorch Operators:Portable gather
+    - component: Machine Learning:ExecuTorch Operators:Portable ge
+    - component: Machine Learning:ExecuTorch Operators:Portable gelu
+    - component: Machine Learning:ExecuTorch Operators:Portable glu
+    - component: Machine Learning:ExecuTorch Operators:Portable grid_sampler_2d
+    - component: Machine Learning:ExecuTorch Operators:Portable gt
+    - component: Machine Learning:ExecuTorch Operators:Portable hardtanh
+    - component: Machine Learning:ExecuTorch Operators:Portable index
+    - component: Machine Learning:ExecuTorch Operators:Portable index_put
+    - component: Machine Learning:ExecuTorch Operators:Portable index_select
+    - component: Machine Learning:ExecuTorch Operators:Portable isinf
+    - component: Machine Learning:ExecuTorch Operators:Portable isnan
+    - component: Machine Learning:ExecuTorch Operators:Portable le
+    - component: Machine Learning:ExecuTorch Operators:Portable leaky_relu
+    - component: Machine Learning:ExecuTorch Operators:Portable lift_fresh_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable log
+    - component: Machine Learning:ExecuTorch Operators:Portable log10
+    - component: Machine Learning:ExecuTorch Operators:Portable log1p
+    - component: Machine Learning:ExecuTorch Operators:Portable log2
+    - component: Machine Learning:ExecuTorch Operators:Portable log_softmax
+    - component: Machine Learning:ExecuTorch Operators:Portable logical_and
+    - component: Machine Learning:ExecuTorch Operators:Portable logical_not
+    - component: Machine Learning:ExecuTorch Operators:Portable logical_or
+    - component: Machine Learning:ExecuTorch Operators:Portable logical_xor
+    - component: Machine Learning:ExecuTorch Operators:Portable logit
+    - component: Machine Learning:ExecuTorch Operators:Portable lt
+    - component: Machine Learning:ExecuTorch Operators:Portable masked_fill
+    - component: Machine Learning:ExecuTorch Operators:Portable masked_scatter
+    - component: Machine Learning:ExecuTorch Operators:Portable masked_select
+    - component: Machine Learning:ExecuTorch Operators:Portable max
+    - component: Machine Learning:ExecuTorch Operators:Portable max_pool2d_with_indices
+    - component: Machine Learning:ExecuTorch Operators:Portable max_pool2d_with_indices_backward
+    - component: Machine Learning:ExecuTorch Operators:Portable maximum
+    - component: Machine Learning:ExecuTorch Operators:Portable mean
+    - component: Machine Learning:ExecuTorch Operators:Portable min
+    - component: Machine Learning:ExecuTorch Operators:Portable minimum
+    - component: Machine Learning:ExecuTorch Operators:Portable mm
+    - component: Machine Learning:ExecuTorch Operators:Portable mul
+    - component: Machine Learning:ExecuTorch Operators:Portable narrow_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable native_batch_norm
+    - component: Machine Learning:ExecuTorch Operators:Portable native_dropout
+    - component: Machine Learning:ExecuTorch Operators:Portable native_group_norm
+    - component: Machine Learning:ExecuTorch Operators:Portable native_layer_norm
+    - component: Machine Learning:ExecuTorch Operators:Portable ne
+    - component: Machine Learning:ExecuTorch Operators:Portable neg
+    - component: Machine Learning:ExecuTorch Operators:Portable nonzero
+    - component: Machine Learning:ExecuTorch Operators:Portable ones
+    - component: Machine Learning:ExecuTorch Operators:Portable pdist_forward
+    - component: Machine Learning:ExecuTorch Operators:Portable permute_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable pixel_shuffle
+    - component: Machine Learning:ExecuTorch Operators:Portable pixel_unshuffle
+    - component: Machine Learning:ExecuTorch Operators:Portable pow
+    - component: Machine Learning:ExecuTorch Operators:Portable prod
+    - component: Machine Learning:ExecuTorch Operators:Portable rand
+    - component: Machine Learning:ExecuTorch Operators:Portable randn
+    - component: Machine Learning:ExecuTorch Operators:Portable reciprocal
+    - component: Machine Learning:ExecuTorch Operators:Portable reflection_pad1d
+    - component: Machine Learning:ExecuTorch Operators:Portable reflection_pad2d
+    - component: Machine Learning:ExecuTorch Operators:Portable reflection_pad3d
+    - component: Machine Learning:ExecuTorch Operators:Portable relu
+    - component: Machine Learning:ExecuTorch Operators:Portable remainder
+    - component: Machine Learning:ExecuTorch Operators:Portable repeat
+    - component: Machine Learning:ExecuTorch Operators:Portable repeat_interleave
+    - component: Machine Learning:ExecuTorch Operators:Portable replication_pad1d
+    - component: Machine Learning:ExecuTorch Operators:Portable replication_pad2d
+    - component: Machine Learning:ExecuTorch Operators:Portable replication_pad3d
+    - component: Machine Learning:ExecuTorch Operators:Portable roll
+    - component: Machine Learning:ExecuTorch Operators:Portable round
+    - component: Machine Learning:ExecuTorch Operators:Portable rsqrt
+    - component: Machine Learning:ExecuTorch Operators:Portable rsub
+    - component: Machine Learning:ExecuTorch Operators:Portable scalar_tensor
+    - component: Machine Learning:ExecuTorch Operators:Portable scatter
+    - component: Machine Learning:ExecuTorch Operators:Portable scatter_add
+    - component: Machine Learning:ExecuTorch Operators:Portable select_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable select_scatter
+    - component: Machine Learning:ExecuTorch Operators:Portable sigmoid
+    - component: Machine Learning:ExecuTorch Operators:Portable sign
+    - component: Machine Learning:ExecuTorch Operators:Portable sin
+    - component: Machine Learning:ExecuTorch Operators:Portable sinh
+    - component: Machine Learning:ExecuTorch Operators:Portable slice_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable slice_scatter
+    - component: Machine Learning:ExecuTorch Operators:Portable softmax
+    - component: Machine Learning:ExecuTorch Operators:Portable split_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable split_with_sizes_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable sqrt
+    - component: Machine Learning:ExecuTorch Operators:Portable squeeze_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable stack
+    - component: Machine Learning:ExecuTorch Operators:Portable sub
+    - component: Machine Learning:ExecuTorch Operators:Portable sum
+    - component: Machine Learning:ExecuTorch Operators:Portable t_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable tan
+    - component: Machine Learning:ExecuTorch Operators:Portable tanh
+    - component: Machine Learning:ExecuTorch Operators:Portable to_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable topk
+    - component: Machine Learning:ExecuTorch Operators:Portable transpose_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable tril
+    - component: Machine Learning:ExecuTorch Operators:Portable trunc
+    - component: Machine Learning:ExecuTorch Operators:Portable unbind_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable unfold_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable unsqueeze_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable upsample_bilinear2d
+    - component: Machine Learning:ExecuTorch Operators:Portable upsample_bilinear2d_aa
+    - component: Machine Learning:ExecuTorch Operators:Portable upsample_nearest2d
+    - component: Machine Learning:ExecuTorch Operators:Portable var
+    - component: Machine Learning:ExecuTorch Operators:Portable var_mean
+    - component: Machine Learning:ExecuTorch Operators:Portable view_as_real_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable view_copy
+    - component: Machine Learning:ExecuTorch Operators:Portable where
+    - component: Machine Learning:ExecuTorch Operators:Portable zeros
+    - component: Machine Learning:ExecuTorch Operators:Quantized add
+    - component: Machine Learning:ExecuTorch Operators:Quantized choose_qparams
+    - component: Machine Learning:ExecuTorch Operators:Quantized dequantize
+    - component: Machine Learning:ExecuTorch Operators:Quantized embedding
+    - component: Machine Learning:ExecuTorch Operators:Quantized embedding2b
+    - component: Machine Learning:ExecuTorch Operators:Quantized embedding4b
+    - component: Machine Learning:ExecuTorch Operators:Quantized mixed_linear
+    - component: Machine Learning:ExecuTorch Operators:Quantized mixed_mm
+    - component: Machine Learning:ExecuTorch Operators:Quantized quantize
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M dequantize_per_tensor
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M maximum
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M minimum
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M pad
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantize_per_tensor
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_activation
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_add
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_avg_pool2d
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_batch_matmul
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_conv2d
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_depthwise_conv2d
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_linear
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_max_pool2d
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_mul
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M quantized_transpose_conv2d
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M softmax
+    - component: Machine Learning:ExecuTorch Operators:Cortex-M transpose
+
+  # Squeeze the whole-operator-surface image: no exceptions/RTTI/unwind tables
+  # (ExecuTorch is exception-free by design) and LTO on top of -Os. Build under
+  # the Release build-type (optimize: size); -O0/-Og images do not fit the
+  # 3 MB flash partition.
+  misc:
+    - for-compiler: GCC
+      C: [-flto=auto, -fno-unwind-tables, -fno-asynchronous-unwind-tables]
+      CPP: [-flto=auto, -fno-unwind-tables, -fno-asynchronous-unwind-tables,
+            -fno-exceptions, -fno-rtti]
+      Link: [-flto=auto, -Os]
+
+  linker:
+    - script: ./xmc7200d_x8384_cm0plus.ld
+      for-compiler: GCC
+
+  groups:
+    - group: App
+      files:
+        - file: ../common/main.cpp
+        # This context's OWN M0+ (SCALAR-sized) models.
+        - file: ./embedded_models.cpp
+        - file: ./embedded_models_blob.S
+        - file: ../common/et_pal_override.cpp
+        # No ALL_OPS_ETHOS_U define -> compiles to the no-op ethos_setup().
+        - file: ../common/ethos_setup.cpp
+    - group: Board
+      files:
+        - file: ./board_t2g_cm0p.c
+        - file: ../board/retarget_stdio.c
+
+  output:
+    type:
+      - elf
+      - hex
+      - map

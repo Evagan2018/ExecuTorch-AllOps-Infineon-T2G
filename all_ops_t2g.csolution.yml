@@ -1,0 +1,60 @@
+# Copyright 2026 Arm Limited and/or its affiliates.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# ExecuTorch CMSIS-Pack all-ops test on the Infineon TRAVEO T2G
+# (KIT_T2G-B-H_LITE, CYT4BF8CDS) -- the dual-core board port of the test:
+#
+#   * Cortex-M0+ -- Armv6-M, no DSP/MVE: every CMSIS-NN kernel takes its
+#     pure-C SCALAR path. Also the T2G boot core: it configures the device,
+#     runs its test first, then releases CM7 core 0.
+#   * Cortex-M7 core 0 -- CMSIS-NN DSP path, models exported with M7
+#     (DSP-sized) AoT scratch.
+#
+# Both images share the single KitProg3 UART; the CM0+ only starts the CM7
+# after its own run is complete, so the two result tables print sequentially.
+#
+# The PyTorch::ExecuTorch pack is bundled under packs/ (install it with
+# cpackget); see README.md for build/run commands.
+
+solution:
+  created-for: CMSIS-Toolbox@2.14.1
+  cdefault:
+  compiler: GCC@14.3.1
+
+  packs:
+    - pack: ARM::CMSIS@>=6.0.0
+    - pack: ARM::CMSIS-NN
+    - pack: ARM::CMSIS-Compiler
+    - pack: Infineon::T2G-B-H_DFP@>=1.2.1
+    - pack: Infineon::KIT_T2G-B-H_LITE_BSP@>=1.2.1
+    # Bundled ExecuTorch pack (this repo ships it under packs/).
+    - pack: PyTorch::ExecuTorch@1.4.0-stage
+
+  target-types:
+    - type: T2G-Kit
+      board: KIT_T2G-B-H_LITE:V1
+      device: CYT4BF8CDS
+      target-set:
+        - set:
+          images:
+            - project-context: all_ops_m0plus.Release
+            - project-context: all_ops_cm7.Release
+          debugger:
+            name: KitProg3@pyOCD
+            port: 3333
+            protocol: swd
+            clock: 10000000
+
+  build-types:
+    # Size-optimized (the -O0 image is ~6.3 MB per core; the flash partitions
+    # are 3 MB CM0+ / 5 MB CM7_0). debug: on keeps full DWARF, so on-target
+    # debugging works.
+    - type: Release
+      debug: on
+      optimize: size
+
+  projects:
+    - project: ./cm0plus/all_ops_m0plus.cproject.yml
+    - project: ./cm7_0/all_ops_cm7.cproject.yml

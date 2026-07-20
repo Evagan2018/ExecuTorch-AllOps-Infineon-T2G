@@ -1,0 +1,56 @@
+name: Build T2G all-ops solution
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Activate vcpkg (CMSIS-Toolbox + GCC toolchain)
+        uses: ARM-software/cmsis-actions/vcpkg@v1
+        with:
+          config: "./vcpkg-configuration.json"
+          cache: "T2G-allops"
+
+      - name: Initialize CMSIS pack root folder
+        run: |
+          cpackget init https://www.keil.com/pack/index.pidx
+          cpackget update-index
+
+      - name: Install the bundled ExecuTorch pack
+        run: |
+          cpackget add ./packs/PyTorch.ExecuTorch.1.4.0-stage.pack --agree-embedded-license
+
+      - name: Install public packs required by the solution
+        run: |
+          csolution list packs all_ops_t2g.csolution.yml -m > packs.txt
+          cpackget add -f packs.txt --agree-embedded-license
+
+      - name: Cache downloaded packs
+        uses: actions/cache@v4
+        with:
+          key: T2G-allops-packs
+          path: /home/runner/.cache/arm/packs/.Download
+
+      - name: Build both cores (Release)
+        run: |
+          cbuild all_ops_t2g.csolution.yml --update-rte \
+            --context all_ops_m0plus.Release+T2G-Kit \
+            --context all_ops_cm7.Release+T2G-Kit
+
+      - name: Upload firmware images
+        uses: actions/upload-artifact@v4
+        with:
+          name: T2G-Kit-Release
+          path: |
+            ./out/**/*.elf
+            ./out/**/*.hex
+            ./out/**/*.map

@@ -1,0 +1,837 @@
+[
+  {
+    "op": "adaptive_avg_pool2d",
+    "category": "Portable",
+    "name": "portable__adaptive_avg_pool2d"
+  },
+  {
+    "op": "conj_physical",
+    "category": "Portable",
+    "name": "portable__conj_physical"
+  },
+  {
+    "op": "abs",
+    "category": "Portable",
+    "name": "portable__abs"
+  },
+  {
+    "op": "acos",
+    "category": "Portable",
+    "name": "portable__acos"
+  },
+  {
+    "op": "acosh",
+    "category": "Portable",
+    "name": "portable__acosh"
+  },
+  {
+    "op": "add",
+    "category": "Portable",
+    "name": "portable__add"
+  },
+  {
+    "op": "addmm",
+    "category": "Portable",
+    "name": "portable__addmm"
+  },
+  {
+    "op": "alias_copy",
+    "category": "Portable",
+    "name": "portable__alias_copy"
+  },
+  {
+    "op": "amax",
+    "category": "Portable",
+    "name": "portable__amax"
+  },
+  {
+    "op": "amin",
+    "category": "Portable",
+    "name": "portable__amin"
+  },
+  {
+    "op": "any",
+    "category": "Portable",
+    "name": "portable__any"
+  },
+  {
+    "op": "argmax",
+    "category": "Portable",
+    "name": "portable__argmax"
+  },
+  {
+    "op": "argmin",
+    "category": "Portable",
+    "name": "portable__argmin"
+  },
+  {
+    "op": "as_strided_copy",
+    "category": "Portable",
+    "name": "portable__as_strided_copy"
+  },
+  {
+    "op": "asin",
+    "category": "Portable",
+    "name": "portable__asin"
+  },
+  {
+    "op": "asinh",
+    "category": "Portable",
+    "name": "portable__asinh"
+  },
+  {
+    "op": "atan",
+    "category": "Portable",
+    "name": "portable__atan"
+  },
+  {
+    "op": "atan2",
+    "category": "Portable",
+    "name": "portable__atan2"
+  },
+  {
+    "op": "atanh",
+    "category": "Portable",
+    "name": "portable__atanh"
+  },
+  {
+    "op": "avg_pool2d",
+    "category": "Portable",
+    "name": "portable__avg_pool2d"
+  },
+  {
+    "op": "bitwise_and",
+    "category": "Portable",
+    "name": "portable__bitwise_and"
+  },
+  {
+    "op": "bitwise_left_shift",
+    "category": "Portable",
+    "name": "portable__bitwise_left_shift"
+  },
+  {
+    "op": "bitwise_not",
+    "category": "Portable",
+    "name": "portable__bitwise_not"
+  },
+  {
+    "op": "bitwise_or",
+    "category": "Portable",
+    "name": "portable__bitwise_or"
+  },
+  {
+    "op": "bitwise_right_shift",
+    "category": "Portable",
+    "name": "portable__bitwise_right_shift"
+  },
+  {
+    "op": "bitwise_xor",
+    "category": "Portable",
+    "name": "portable__bitwise_xor"
+  },
+  {
+    "op": "bmm",
+    "category": "Portable",
+    "name": "portable__bmm"
+  },
+  {
+    "op": "cat",
+    "category": "Portable",
+    "name": "portable__cat"
+  },
+  {
+    "op": "ceil",
+    "category": "Portable",
+    "name": "portable__ceil"
+  },
+  {
+    "op": "clamp",
+    "category": "Portable",
+    "name": "portable__clamp"
+  },
+  {
+    "op": "clone",
+    "category": "Portable",
+    "name": "portable__clone"
+  },
+  {
+    "op": "constant_pad_nd",
+    "category": "Portable",
+    "name": "portable__constant_pad_nd"
+  },
+  {
+    "op": "convolution",
+    "category": "Portable",
+    "name": "portable__convolution"
+  },
+  {
+    "op": "copy",
+    "category": "Portable",
+    "name": "portable__copy"
+  },
+  {
+    "op": "cos",
+    "category": "Portable",
+    "name": "portable__cos"
+  },
+  {
+    "op": "cosh",
+    "category": "Portable",
+    "name": "portable__cosh"
+  },
+  {
+    "op": "cumsum",
+    "category": "Portable",
+    "name": "portable__cumsum"
+  },
+  {
+    "op": "detach_copy",
+    "category": "Portable",
+    "name": "portable__detach_copy"
+  },
+  {
+    "op": "diagonal_copy",
+    "category": "Portable",
+    "name": "portable__diagonal_copy"
+  },
+  {
+    "op": "div",
+    "category": "Portable",
+    "name": "portable__div"
+  },
+  {
+    "op": "elu",
+    "category": "Portable",
+    "name": "portable__elu"
+  },
+  {
+    "op": "embedding",
+    "category": "Portable",
+    "name": "portable__embedding"
+  },
+  {
+    "op": "eq",
+    "category": "Portable",
+    "name": "portable__eq"
+  },
+  {
+    "op": "erf",
+    "category": "Portable",
+    "name": "portable__erf"
+  },
+  {
+    "op": "exp",
+    "category": "Portable",
+    "name": "portable__exp"
+  },
+  {
+    "op": "expand_copy",
+    "category": "Portable",
+    "name": "portable__expand_copy"
+  },
+  {
+    "op": "expm1",
+    "category": "Portable",
+    "name": "portable__expm1"
+  },
+  {
+    "op": "fill",
+    "category": "Portable",
+    "name": "portable__fill"
+  },
+  {
+    "op": "flip",
+    "category": "Portable",
+    "name": "portable__flip"
+  },
+  {
+    "op": "floor",
+    "category": "Portable",
+    "name": "portable__floor"
+  },
+  {
+    "op": "floor_divide",
+    "category": "Portable",
+    "name": "portable__floor_divide"
+  },
+  {
+    "op": "fmod",
+    "category": "Portable",
+    "name": "portable__fmod"
+  },
+  {
+    "op": "full_like",
+    "category": "Portable",
+    "name": "portable__full_like"
+  },
+  {
+    "op": "gather",
+    "category": "Portable",
+    "name": "portable__gather"
+  },
+  {
+    "op": "ge",
+    "category": "Portable",
+    "name": "portable__ge"
+  },
+  {
+    "op": "gelu",
+    "category": "Portable",
+    "name": "portable__gelu"
+  },
+  {
+    "op": "glu",
+    "category": "Portable",
+    "name": "portable__glu"
+  },
+  {
+    "op": "gt",
+    "category": "Portable",
+    "name": "portable__gt"
+  },
+  {
+    "op": "hardtanh",
+    "category": "Portable",
+    "name": "portable__hardtanh"
+  },
+  {
+    "op": "index",
+    "category": "Portable",
+    "name": "portable__index"
+  },
+  {
+    "op": "index_put",
+    "category": "Portable",
+    "name": "portable__index_put"
+  },
+  {
+    "op": "index_select",
+    "category": "Portable",
+    "name": "portable__index_select"
+  },
+  {
+    "op": "isinf",
+    "category": "Portable",
+    "name": "portable__isinf"
+  },
+  {
+    "op": "isnan",
+    "category": "Portable",
+    "name": "portable__isnan"
+  },
+  {
+    "op": "le",
+    "category": "Portable",
+    "name": "portable__le"
+  },
+  {
+    "op": "leaky_relu",
+    "category": "Portable",
+    "name": "portable__leaky_relu"
+  },
+  {
+    "op": "lift_fresh_copy",
+    "category": "Portable",
+    "name": "portable__lift_fresh_copy"
+  },
+  {
+    "op": "log",
+    "category": "Portable",
+    "name": "portable__log"
+  },
+  {
+    "op": "log10",
+    "category": "Portable",
+    "name": "portable__log10"
+  },
+  {
+    "op": "log1p",
+    "category": "Portable",
+    "name": "portable__log1p"
+  },
+  {
+    "op": "log2",
+    "category": "Portable",
+    "name": "portable__log2"
+  },
+  {
+    "op": "log_softmax",
+    "category": "Portable",
+    "name": "portable__log_softmax"
+  },
+  {
+    "op": "logical_and",
+    "category": "Portable",
+    "name": "portable__logical_and"
+  },
+  {
+    "op": "logical_not",
+    "category": "Portable",
+    "name": "portable__logical_not"
+  },
+  {
+    "op": "logical_or",
+    "category": "Portable",
+    "name": "portable__logical_or"
+  },
+  {
+    "op": "logical_xor",
+    "category": "Portable",
+    "name": "portable__logical_xor"
+  },
+  {
+    "op": "logit",
+    "category": "Portable",
+    "name": "portable__logit"
+  },
+  {
+    "op": "lt",
+    "category": "Portable",
+    "name": "portable__lt"
+  },
+  {
+    "op": "masked_fill",
+    "category": "Portable",
+    "name": "portable__masked_fill"
+  },
+  {
+    "op": "masked_scatter",
+    "category": "Portable",
+    "name": "portable__masked_scatter"
+  },
+  {
+    "op": "max",
+    "category": "Portable",
+    "name": "portable__max"
+  },
+  {
+    "op": "max_pool2d_with_indices",
+    "category": "Portable",
+    "name": "portable__max_pool2d_with_indices"
+  },
+  {
+    "op": "maximum",
+    "category": "Portable",
+    "name": "portable__maximum"
+  },
+  {
+    "op": "mean",
+    "category": "Portable",
+    "name": "portable__mean"
+  },
+  {
+    "op": "min",
+    "category": "Portable",
+    "name": "portable__min"
+  },
+  {
+    "op": "minimum",
+    "category": "Portable",
+    "name": "portable__minimum"
+  },
+  {
+    "op": "mm",
+    "category": "Portable",
+    "name": "portable__mm"
+  },
+  {
+    "op": "mul",
+    "category": "Portable",
+    "name": "portable__mul"
+  },
+  {
+    "op": "narrow_copy",
+    "category": "Portable",
+    "name": "portable__narrow_copy"
+  },
+  {
+    "op": "native_batch_norm",
+    "category": "Portable",
+    "name": "portable__native_batch_norm"
+  },
+  {
+    "op": "native_group_norm",
+    "category": "Portable",
+    "name": "portable__native_group_norm"
+  },
+  {
+    "op": "native_layer_norm",
+    "category": "Portable",
+    "name": "portable__native_layer_norm"
+  },
+  {
+    "op": "ne",
+    "category": "Portable",
+    "name": "portable__ne"
+  },
+  {
+    "op": "neg",
+    "category": "Portable",
+    "name": "portable__neg"
+  },
+  {
+    "op": "permute_copy",
+    "category": "Portable",
+    "name": "portable__permute_copy"
+  },
+  {
+    "op": "pixel_shuffle",
+    "category": "Portable",
+    "name": "portable__pixel_shuffle"
+  },
+  {
+    "op": "pixel_unshuffle",
+    "category": "Portable",
+    "name": "portable__pixel_unshuffle"
+  },
+  {
+    "op": "pow",
+    "category": "Portable",
+    "name": "portable__pow"
+  },
+  {
+    "op": "prod",
+    "category": "Portable",
+    "name": "portable__prod"
+  },
+  {
+    "op": "reciprocal",
+    "category": "Portable",
+    "name": "portable__reciprocal"
+  },
+  {
+    "op": "reflection_pad1d",
+    "category": "Portable",
+    "name": "portable__reflection_pad1d"
+  },
+  {
+    "op": "reflection_pad2d",
+    "category": "Portable",
+    "name": "portable__reflection_pad2d"
+  },
+  {
+    "op": "reflection_pad3d",
+    "category": "Portable",
+    "name": "portable__reflection_pad3d"
+  },
+  {
+    "op": "relu",
+    "category": "Portable",
+    "name": "portable__relu"
+  },
+  {
+    "op": "remainder",
+    "category": "Portable",
+    "name": "portable__remainder"
+  },
+  {
+    "op": "repeat",
+    "category": "Portable",
+    "name": "portable__repeat"
+  },
+  {
+    "op": "repeat_interleave",
+    "category": "Portable",
+    "name": "portable__repeat_interleave"
+  },
+  {
+    "op": "replication_pad1d",
+    "category": "Portable",
+    "name": "portable__replication_pad1d"
+  },
+  {
+    "op": "replication_pad2d",
+    "category": "Portable",
+    "name": "portable__replication_pad2d"
+  },
+  {
+    "op": "replication_pad3d",
+    "category": "Portable",
+    "name": "portable__replication_pad3d"
+  },
+  {
+    "op": "roll",
+    "category": "Portable",
+    "name": "portable__roll"
+  },
+  {
+    "op": "round",
+    "category": "Portable",
+    "name": "portable__round"
+  },
+  {
+    "op": "rsqrt",
+    "category": "Portable",
+    "name": "portable__rsqrt"
+  },
+  {
+    "op": "rsub",
+    "category": "Portable",
+    "name": "portable__rsub"
+  },
+  {
+    "op": "scatter",
+    "category": "Portable",
+    "name": "portable__scatter"
+  },
+  {
+    "op": "scatter_add",
+    "category": "Portable",
+    "name": "portable__scatter_add"
+  },
+  {
+    "op": "select_copy",
+    "category": "Portable",
+    "name": "portable__select_copy"
+  },
+  {
+    "op": "select_scatter",
+    "category": "Portable",
+    "name": "portable__select_scatter"
+  },
+  {
+    "op": "sigmoid",
+    "category": "Portable",
+    "name": "portable__sigmoid"
+  },
+  {
+    "op": "sign",
+    "category": "Portable",
+    "name": "portable__sign"
+  },
+  {
+    "op": "sin",
+    "category": "Portable",
+    "name": "portable__sin"
+  },
+  {
+    "op": "sinh",
+    "category": "Portable",
+    "name": "portable__sinh"
+  },
+  {
+    "op": "slice_copy",
+    "category": "Portable",
+    "name": "portable__slice_copy"
+  },
+  {
+    "op": "slice_scatter",
+    "category": "Portable",
+    "name": "portable__slice_scatter"
+  },
+  {
+    "op": "softmax",
+    "category": "Portable",
+    "name": "portable__softmax"
+  },
+  {
+    "op": "split_copy",
+    "category": "Portable",
+    "name": "portable__split_copy"
+  },
+  {
+    "op": "split_with_sizes_copy",
+    "category": "Portable",
+    "name": "portable__split_with_sizes_copy"
+  },
+  {
+    "op": "sqrt",
+    "category": "Portable",
+    "name": "portable__sqrt"
+  },
+  {
+    "op": "squeeze_copy",
+    "category": "Portable",
+    "name": "portable__squeeze_copy"
+  },
+  {
+    "op": "stack",
+    "category": "Portable",
+    "name": "portable__stack"
+  },
+  {
+    "op": "sub",
+    "category": "Portable",
+    "name": "portable__sub"
+  },
+  {
+    "op": "sum",
+    "category": "Portable",
+    "name": "portable__sum"
+  },
+  {
+    "op": "t_copy",
+    "category": "Portable",
+    "name": "portable__t_copy"
+  },
+  {
+    "op": "tan",
+    "category": "Portable",
+    "name": "portable__tan"
+  },
+  {
+    "op": "tanh",
+    "category": "Portable",
+    "name": "portable__tanh"
+  },
+  {
+    "op": "to_copy",
+    "category": "Portable",
+    "name": "portable__to_copy"
+  },
+  {
+    "op": "topk",
+    "category": "Portable",
+    "name": "portable__topk"
+  },
+  {
+    "op": "transpose_copy",
+    "category": "Portable",
+    "name": "portable__transpose_copy"
+  },
+  {
+    "op": "tril",
+    "category": "Portable",
+    "name": "portable__tril"
+  },
+  {
+    "op": "trunc",
+    "category": "Portable",
+    "name": "portable__trunc"
+  },
+  {
+    "op": "unbind_copy",
+    "category": "Portable",
+    "name": "portable__unbind_copy"
+  },
+  {
+    "op": "unfold_copy",
+    "category": "Portable",
+    "name": "portable__unfold_copy"
+  },
+  {
+    "op": "unsqueeze_copy",
+    "category": "Portable",
+    "name": "portable__unsqueeze_copy"
+  },
+  {
+    "op": "upsample_bilinear2d",
+    "category": "Portable",
+    "name": "portable__upsample_bilinear2d"
+  },
+  {
+    "op": "upsample_nearest2d",
+    "category": "Portable",
+    "name": "portable__upsample_nearest2d"
+  },
+  {
+    "op": "var",
+    "category": "Portable",
+    "name": "portable__var"
+  },
+  {
+    "op": "var_mean",
+    "category": "Portable",
+    "name": "portable__var_mean"
+  },
+  {
+    "op": "view_copy",
+    "category": "Portable",
+    "name": "portable__view_copy"
+  },
+  {
+    "op": "where",
+    "category": "Portable",
+    "name": "portable__where"
+  },
+  {
+    "op": "dequantize_per_tensor",
+    "category": "Cortex-M",
+    "name": "cortex_m__dequantize_per_tensor"
+  },
+  {
+    "op": "maximum",
+    "category": "Cortex-M",
+    "name": "cortex_m__maximum"
+  },
+  {
+    "op": "minimum",
+    "category": "Cortex-M",
+    "name": "cortex_m__minimum"
+  },
+  {
+    "op": "pad",
+    "category": "Cortex-M",
+    "name": "cortex_m__pad"
+  },
+  {
+    "op": "quantize_per_tensor",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantize_per_tensor"
+  },
+  {
+    "op": "quantized_add",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_add"
+  },
+  {
+    "op": "quantized_avg_pool2d",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_avg_pool2d"
+  },
+  {
+    "op": "quantized_batch_matmul",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_batch_matmul"
+  },
+  {
+    "op": "quantized_conv2d",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_conv2d"
+  },
+  {
+    "op": "quantized_depthwise_conv2d",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_depthwise_conv2d"
+  },
+  {
+    "op": "quantized_linear",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_linear"
+  },
+  {
+    "op": "quantized_max_pool2d",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_max_pool2d"
+  },
+  {
+    "op": "quantized_mul",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_mul"
+  },
+  {
+    "op": "quantized_transpose_conv2d",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_transpose_conv2d"
+  },
+  {
+    "op": "softmax",
+    "category": "Cortex-M",
+    "name": "cortex_m__softmax"
+  },
+  {
+    "op": "transpose",
+    "category": "Cortex-M",
+    "name": "cortex_m__transpose"
+  },
+  {
+    "op": "quantized_depthwise_conv2d_deep",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_depthwise_conv2d_deep"
+  },
+  {
+    "op": "quantized_conv2d_1xn_pad",
+    "category": "Cortex-M",
+    "name": "cortex_m__quantized_conv2d_1xn_pad"
+  }
+]
