@@ -42,9 +42,7 @@ jobs:
 
       - name: Build both cores (Release)
         run: |
-          cbuild all_ops_t2g.csolution.yml --update-rte \
-            --context all_ops_m0plus.Release+T2G-Kit \
-            --context all_ops_cm7.Release+T2G-Kit
+          cbuild all_ops_t2g.csolution.yml --active T2G-Kit
 
       - name: Upload firmware images
         uses: actions/upload-artifact@v7
