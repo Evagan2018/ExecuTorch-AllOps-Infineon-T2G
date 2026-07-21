@@ -74,10 +74,10 @@ jobs:
           exit 1
         }
 
-    - name: Flash the binaries
-      run: pyocd load --uid "$PROBE_UID" --cbuild-run "$CBUILD_RUN"
-
-    - name: Run the test and check the serial output
+    # The script opens the serial port, flashes both images (the target
+    # boots and runs as soon as programming ends), captures the output of
+    # both cores and judges the result.
+    - name: Flash, run the test and check the serial output
       run: |
         python3 .github/scripts/board_run.py \
           --uid "$PROBE_UID" \

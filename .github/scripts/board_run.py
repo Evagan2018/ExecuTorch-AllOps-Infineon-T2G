@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Run the freshly flashed all-ops firmware and judge its serial output.
+"""Flash the all-ops firmware, run it, and judge its serial output.
 
-Opens the KitProg3 USB-UART bridge (115200-8-N-1) first, then resets the
-target with pyOCD so no boot output is lost. The CM0+ core prints its
-result table, releases CM7 core 0, which prints a second table on the same
-port. Each core ends with a line
+Opens the KitProg3 USB-UART bridge (115200-8-N-1) first, then flashes the
+images with pyOCD; the target boots and runs as soon as programming ends,
+so no output is lost and no separate reset is needed. (Resetting via the
+debug port after flashing proved unreliable on this device: the DFP
+software reset does not restart a running target, and a hardware reset
+leaves pyOCD hanging while the chip goes through its boot ROM.)
+
+The CM0+ core prints its result table, releases CM7 core 0, which prints
+a second table on the same port. Each core ends with a line
 
     Test_result: SUMMARY <passed>/<total> PASS
 
@@ -52,20 +57,14 @@ def open_port(port):
     return fd
 
 
-def reset_target(uid, cbuild_run):
-    # Hardware reset (XRES): reboots both cores and clears any debug-halt
-    # state left behind by the flash session. The DFP software reset
-    # sequences do not restart an already running target, and a core left
-    # halted by the debugger would break the CM0+ -> CM7_0 hand-off.
-    for cmd in (
-        ["pyocd", "reset", "-m", "hw", "--uid", uid,
-         "--cbuild-run", cbuild_run],
-        ["pyocd", "reset", "-m", "hw", "--uid", uid],
-    ):
-        print("+", " ".join(cmd), flush=True)
-        if subprocess.run(cmd).returncode == 0:
-            return
-    sys.exit("error: pyocd reset failed")
+def flash_target(uid, cbuild_run):
+    cmd = ["pyocd", "load", "--uid", uid, "--cbuild-run", cbuild_run]
+    print("+", " ".join(cmd), flush=True)
+    try:
+        if subprocess.run(cmd, timeout=600).returncode != 0:
+            sys.exit("error: pyocd load failed")
+    except subprocess.TimeoutExpired:
+        sys.exit("error: pyocd load timed out after 600 s")
 
 
 def main():
@@ -87,8 +86,11 @@ def main():
                  "/dev/serial/by-id; pass --port explicitly")
     print(f"Serial port: {port}", flush=True)
 
+    # Open the port before flashing: the target starts running the moment
+    # programming finishes, so this captures the run from the first byte.
     fd = open_port(port)
-    reset_target(args.uid, args.cbuild_run)
+    flash_target(args.uid, args.cbuild_run)
+    termios.tcflush(fd, termios.TCIFLUSH)  # drop any pre-flash leftovers
 
     deadline = time.monotonic() + args.timeout_minutes * 60
     last_data = time.monotonic()
