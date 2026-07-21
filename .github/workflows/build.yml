@@ -51,6 +51,4 @@ jobs:
         with:
           name: T2G-Kit-Release
           path: |
-            ./out/**/*.elf
-            ./out/**/*.hex
-            ./out/**/*.map
+            ./out/
