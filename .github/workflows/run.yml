@@ -34,11 +34,10 @@ jobs:
         name: T2G-Kit-Release
         path: ./out
 
-    - name: Execute the CMSIS_Driver_Validation@Release
+    - name: Flash the binaries
       working-directory: ./out
       run: | 
          # TRAVEO T2G Entry Lite Kit with one Cortex-M4 and one Cortex-M0+
          # pyocd load --uid 171C089E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
          # TRAVEO T2G Body High Lite Kit with Dual-Cortex-M7 and Cortex-M0+
          pyocd load --uid 0D18149E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
-
