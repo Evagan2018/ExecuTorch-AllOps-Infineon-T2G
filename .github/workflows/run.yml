@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: Copyright 2022-2025 Arm Limited and/or its
+# affiliates <open-source-office@arm.com>
+# SPDX-License-Identifier: Apache-2.0
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+name: Run T2G all-ops solution
+on:
+
+  workflow_dispatch:
+  
+jobs:
+  CI:
+    runs-on: [self-hosted, rsp-p5-01]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Download Build Artifact
+      uses: dawidd6/action-download-artifact@v21
+      with:
+        workflow: build.yml
+        name: T2G-Kit-Release
+        path: ./out
+
+    - name: Execute the CMSIS_Driver_Validation@Release
+      working-directory: ./out
+      run: | 
+         # TRAVEO T2G Entry Lite Kit with one Cortex-M4 and one Cortex-M0+
+         # pyocd load --uid 171C089E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
+         # TRAVEO T2G Body High Lite Kit with Dual-Cortex-M7 and Cortex-M0+
+         pyocd load --uid 0D18149E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
+
