@@ -53,11 +53,14 @@ def open_port(port):
 
 
 def reset_target(uid, cbuild_run):
-    # Prefer the DFP reset sequences from the cbuild-run file; older pyOCD
-    # versions do not accept --cbuild-run on the reset subcommand.
+    # Hardware reset (XRES): reboots both cores and clears any debug-halt
+    # state left behind by the flash session. The DFP software reset
+    # sequences do not restart an already running target, and a core left
+    # halted by the debugger would break the CM0+ -> CM7_0 hand-off.
     for cmd in (
-        ["pyocd", "reset", "--uid", uid, "--cbuild-run", cbuild_run],
-        ["pyocd", "reset", "--uid", uid],
+        ["pyocd", "reset", "-m", "hw", "--uid", uid,
+         "--cbuild-run", cbuild_run],
+        ["pyocd", "reset", "-m", "hw", "--uid", uid],
     ):
         print("+", " ".join(cmd), flush=True)
         if subprocess.run(cmd).returncode == 0:
