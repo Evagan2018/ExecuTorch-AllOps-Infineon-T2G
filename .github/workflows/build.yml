@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Activate vcpkg (CMSIS-Toolbox + GCC toolchain)
         uses: ARM-software/cmsis-actions/vcpkg@v1
@@ -35,7 +35,7 @@ jobs:
           cpackget add -f packs.txt --agree-embedded-license
 
       - name: Cache downloaded packs
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           key: T2G-allops-packs
           path: /home/runner/.cache/arm/packs/.Download
@@ -47,7 +47,7 @@ jobs:
             --context all_ops_cm7.Release+T2G-Kit
 
       - name: Upload firmware images
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: T2G-Kit-Release
           path: |
