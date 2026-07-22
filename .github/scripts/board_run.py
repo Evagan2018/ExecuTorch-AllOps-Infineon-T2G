@@ -78,19 +78,31 @@ def flash_target(uid, cbuild_run):
 
 
 def pyocd_python():
-    """Interpreter of the pyocd installation (its shebang), so the pyocd
-    package is importable even when pyocd lives in a venv/pipx tree."""
+    """Find an interpreter that can import pyocd: the shebang of the pyocd
+    launcher (venv/pipx installs), then the common interpreters."""
+    candidates = []
     exe = shutil.which("pyocd")
     if exe:
         try:
             with open(exe, "rb") as f:
                 first = f.readline().decode("utf-8", "replace").strip()
+            print(f"pyocd launcher: {exe} ({first[:80]})", flush=True)
             if first.startswith("#!"):
                 parts = first[2:].split()
-                return parts[1] if parts[0].endswith("/env") else parts[0]
+                candidates.append(parts[1] if parts[0].endswith("/env")
+                                  else parts[0])
         except OSError:
             pass
-    return sys.executable
+    candidates += [sys.executable, "python3"]
+    for cand in candidates:
+        try:
+            ok = subprocess.run([cand, "-c", "import pyocd"], timeout=30,
+                                capture_output=True).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            ok = False
+        if ok:
+            return cand
+    return None
 
 
 XRES_PULSE = """
@@ -122,21 +134,28 @@ def hw_reset(uid, cbuild_run):
     """Restart the device. Preferred: pulse the reset line at probe level
     only - no target/debug session, because any debug connection to this
     device blocks the CM7_0 startup again. Fallback: pyocd reset -m hw as
-    an unawaited background process (it toggles XRES within seconds, then
-    tends to hang or reset a second time while reconnecting)."""
-    cmd = [pyocd_python(), "-c", XRES_PULSE, uid]
-    print("+ <probe-level XRES pulse via pyocd API>", flush=True)
-    try:
-        r = subprocess.run(cmd, timeout=60, capture_output=True, text=True)
-        print(r.stdout, end="", flush=True)
-        if r.returncode == 0:
-            return None
-        print(r.stderr, end="", flush=True)
-    except subprocess.TimeoutExpired:
-        print("probe-level XRES pulse timed out", flush=True)
+    an unawaited background process; the caller must kill it the moment
+    the reboot shows up on serial, before it can reconnect or fire a
+    second reset."""
+    interp = pyocd_python()
+    if interp:
+        cmd = [interp, "-c", XRES_PULSE, uid]
+        print("+ <probe-level XRES pulse via pyocd API>", flush=True)
+        try:
+            r = subprocess.run(cmd, timeout=60, capture_output=True,
+                               text=True)
+            print(r.stdout, end="", flush=True)
+            if r.returncode == 0:
+                return None
+            print(r.stderr, end="", flush=True)
+        except subprocess.TimeoutExpired:
+            print("probe-level XRES pulse timed out", flush=True)
+    else:
+        print("no interpreter with the pyocd package found", flush=True)
     cmd = ["pyocd", "reset", "-m", "hw", "--uid", uid,
            "--cbuild-run", cbuild_run]
-    print("+", " ".join(cmd), "(background, not awaited)", flush=True)
+    print("+", " ".join(cmd), "(background, killed at first reboot)",
+          flush=True)
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
                             stderr=subprocess.STDOUT)
 
@@ -205,6 +224,15 @@ def main():
                 line = raw.decode("utf-8", errors="replace").rstrip("\r")
                 print(line, flush=True)
                 if BOOT_RE.search(line):
+                    # The chip rebooted: the background reset (if any) has
+                    # done its one job. Kill it NOW, before it reconnects
+                    # or fires a second reset - any debug connection
+                    # blocks the CM7_0 startup.
+                    if reset_proc is not None and reset_proc.poll() is None:
+                        reset_proc.kill()
+                        reset_proc = None
+                        print("[monitor] reboot seen - killed background "
+                              "pyocd reset", flush=True)
                     # CM7_0 starts its run within a couple of seconds of
                     # the CM0+ summary; a boot marker at any other point
                     # is the hardware reset kicking in - discard whatever
