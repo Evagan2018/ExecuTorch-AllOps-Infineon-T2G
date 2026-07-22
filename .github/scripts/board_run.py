@@ -2,14 +2,14 @@
 """Flash the all-ops firmware, run it, and judge its serial output.
 
 Opens the KitProg3 USB-UART bridge (115200-8-N-1) first, flashes the
-images with pyOCD, then fires a hardware reset (XRES) without waiting for
-pyOCD to finish: after a pyocd load the CM0+ core boots and runs, but
-CM7_0 stays debug-halted and the CM0+ hand-off (which only clears
-CPU_WAIT) cannot start it - only a real reset gives the clean power-on
-style boot the manual flow relies on. pyOCD toggles the reset line within
-a couple of seconds but then tends to hang reconnecting while the chip is
-in its boot ROM, so the reset runs as a background process that is killed
-at the end rather than awaited.
+images with pyOCD, then restarts the device by pulsing the reset line
+(XRES) at probe level only, without any target/debug session: after a
+pyocd load the CM0+ core boots and runs, but CM7_0 never starts - the
+CM0+ hand-off only clears CPU_WAIT, and any debug connection to the
+device blocks CM7_0 again (observed even when a full pyocd hardware
+reset was used: its post-reset reconnect kept CM7_0 down). Only a bare
+XRES with the debugger staying away gives the power-on style boot the
+manual flow ("reset the board") relies on.
 
 The capture may therefore contain a partial pre-reset run; a fresh boot
 is recognised by the first model's "Test_exec" line and discards
@@ -34,6 +34,7 @@ import glob
 import os
 import re
 import select
+import shutil
 import subprocess
 import sys
 import termios
@@ -76,7 +77,63 @@ def flash_target(uid, cbuild_run):
         sys.exit("error: pyocd load timed out after 600 s")
 
 
-def hw_reset_async(uid, cbuild_run):
+def pyocd_python():
+    """Interpreter of the pyocd installation (its shebang), so the pyocd
+    package is importable even when pyocd lives in a venv/pipx tree."""
+    exe = shutil.which("pyocd")
+    if exe:
+        try:
+            with open(exe, "rb") as f:
+                first = f.readline().decode("utf-8", "replace").strip()
+            if first.startswith("#!"):
+                parts = first[2:].split()
+                return parts[1] if parts[0].endswith("/env") else parts[0]
+        except OSError:
+            pass
+    return sys.executable
+
+
+XRES_PULSE = """
+import sys, time
+from pyocd.probe.aggregator import DebugProbeAggregator
+uid = sys.argv[1]
+probe = next((p for p in DebugProbeAggregator.get_all_connected_probes()
+              if uid in (p.unique_id or "")), None)
+if probe is None:
+    sys.exit("probe %s not found" % uid)
+probe.open()
+try:
+    probe.connect()
+except Exception:
+    pass  # pin control usually works without a wire protocol selected
+probe.assert_reset(True)
+time.sleep(0.25)
+probe.assert_reset(False)
+try:
+    probe.disconnect()
+except Exception:
+    pass
+probe.close()
+print("XRES pulsed")
+"""
+
+
+def hw_reset(uid, cbuild_run):
+    """Restart the device. Preferred: pulse the reset line at probe level
+    only - no target/debug session, because any debug connection to this
+    device blocks the CM7_0 startup again. Fallback: pyocd reset -m hw as
+    an unawaited background process (it toggles XRES within seconds, then
+    tends to hang or reset a second time while reconnecting)."""
+    cmd = [pyocd_python(), "-c", XRES_PULSE, uid]
+    print("+ <probe-level XRES pulse via pyocd API>", flush=True)
+    try:
+        r = subprocess.run(cmd, timeout=60, capture_output=True, text=True)
+        print(r.stdout, end="", flush=True)
+        if r.returncode == 0:
+            return None
+        print(r.stderr, end="", flush=True)
+    except subprocess.TimeoutExpired:
+        print("probe-level XRES pulse timed out", flush=True)
     cmd = ["pyocd", "reset", "-m", "hw", "--uid", uid,
            "--cbuild-run", cbuild_run]
     print("+", " ".join(cmd), "(background, not awaited)", flush=True)
@@ -107,7 +164,7 @@ def main():
     fd = open_port(port)
     flash_target(args.uid, args.cbuild_run)
     termios.tcflush(fd, termios.TCIFLUSH)  # drop any pre-flash leftovers
-    reset_proc = hw_reset_async(args.uid, args.cbuild_run)
+    reset_proc = hw_reset(args.uid, args.cbuild_run)
 
     deadline = time.monotonic() + args.timeout_minutes * 60
     last_data = time.monotonic()
@@ -173,7 +230,7 @@ def main():
                 elif FAIL_RE.search(line):
                     fails.append(line)
     os.close(fd)
-    if reset_proc.poll() is None:
+    if reset_proc is not None and reset_proc.poll() is None:
         print("[monitor] killing still-running background pyocd reset",
               flush=True)
         reset_proc.kill()
