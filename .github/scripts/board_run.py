@@ -35,6 +35,7 @@ import os
 import re
 import select
 import shutil
+import signal
 import subprocess
 import sys
 import termios
@@ -156,8 +157,23 @@ def hw_reset(uid, cbuild_run):
            "--cbuild-run", cbuild_run]
     print("+", " ".join(cmd), "(background, killed at first reboot)",
           flush=True)
+    # New session = own process group, so the whole tree can be killed:
+    # the runner's pyocd is a PyInstaller onefile binary whose bootloader
+    # parent spawns the real pyocd as a child - killing just the parent
+    # leaves the child alive (it fired a second reset and reconnected).
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                            stderr=subprocess.STDOUT)
+                            stderr=subprocess.STDOUT,
+                            start_new_session=True)
+
+
+def kill_reset(proc):
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    # Belt and braces against detached descendants.
+    subprocess.run(["pkill", "-9", "-f", "pyocd reset"],
+                   capture_output=True)
 
 
 def main():
@@ -228,11 +244,12 @@ def main():
                     # done its one job. Kill it NOW, before it reconnects
                     # or fires a second reset - any debug connection
                     # blocks the CM7_0 startup.
-                    if reset_proc is not None and reset_proc.poll() is None:
-                        reset_proc.kill()
+                    if reset_proc is not None:
+                        kill_reset(reset_proc)
                         reset_proc = None
                         print("[monitor] reboot seen - killed background "
-                              "pyocd reset", flush=True)
+                              "pyocd reset (whole process group)",
+                              flush=True)
                     # CM7_0 starts its run within a couple of seconds of
                     # the CM0+ summary; a boot marker at any other point
                     # is the hardware reset kicking in - discard whatever
@@ -258,10 +275,9 @@ def main():
                 elif FAIL_RE.search(line):
                     fails.append(line)
     os.close(fd)
-    if reset_proc is not None and reset_proc.poll() is None:
-        print("[monitor] killing still-running background pyocd reset",
-              flush=True)
-        reset_proc.kill()
+    if reset_proc is not None:
+        print("[monitor] killing background pyocd reset", flush=True)
+        kill_reset(reset_proc)
 
     print()
     if stop_reason:
