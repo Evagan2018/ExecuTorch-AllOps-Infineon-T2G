@@ -74,9 +74,10 @@ jobs:
           exit 1
         }
 
-    # The script opens the serial port, flashes both images (the target
-    # boots and runs as soon as programming ends), captures the output of
-    # both cores and judges the result.
+    # The script opens the serial port, flashes both images, restarts the
+    # device with a hardware reset (needed for the CM0+ -> CM7_0 hand-off;
+    # fired in the background because pyOCD tends to hang reconnecting
+    # afterwards), captures the output of both cores and judges the result.
     - name: Flash, run the test and check the serial output
       run: |
         python3 .github/scripts/board_run.py \

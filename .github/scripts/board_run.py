@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """Flash the all-ops firmware, run it, and judge its serial output.
 
-Opens the KitProg3 USB-UART bridge (115200-8-N-1) first, then flashes the
-images with pyOCD; the target boots and runs as soon as programming ends,
-so no output is lost and no separate reset is needed. (Resetting via the
-debug port after flashing proved unreliable on this device: the DFP
-software reset does not restart a running target, and a hardware reset
-leaves pyOCD hanging while the chip goes through its boot ROM.)
+Opens the KitProg3 USB-UART bridge (115200-8-N-1) first, flashes the
+images with pyOCD, then fires a hardware reset (XRES) without waiting for
+pyOCD to finish: after a pyocd load the CM0+ core boots and runs, but
+CM7_0 stays debug-halted and the CM0+ hand-off (which only clears
+CPU_WAIT) cannot start it - only a real reset gives the clean power-on
+style boot the manual flow relies on. pyOCD toggles the reset line within
+a couple of seconds but then tends to hang reconnecting while the chip is
+in its boot ROM, so the reset runs as a background process that is killed
+at the end rather than awaited.
 
-The CM0+ core prints its result table, releases CM7 core 0, which prints
-a second table on the same port. Each core ends with a line
+The capture may therefore contain a partial pre-reset run; a fresh boot
+is recognised by the first model's "Test_exec" line and discards
+anything seen before it. After the reset the CM0+ core prints its result
+table, releases CM7 core 0, which prints a second table on the same
+port. Each core ends with a line
 
     Test_result: SUMMARY <passed>/<total> PASS
 
@@ -35,6 +41,9 @@ import time
 
 SUMMARY_RE = re.compile(r"Test_result: SUMMARY (\d+)/(\d+) (PASS|FAIL)")
 FAIL_RE = re.compile(r"Test_result: .* FAIL")
+# First entry of g_embedded_models[] on both cores (embedded_models.cpp):
+# each core's run starts with this line, so it marks a (re)boot.
+BOOT_RE = re.compile(r"Test_exec: adaptive_avg_pool2d\b")
 
 
 def find_port(uid):
@@ -67,6 +76,14 @@ def flash_target(uid, cbuild_run):
         sys.exit("error: pyocd load timed out after 600 s")
 
 
+def hw_reset_async(uid, cbuild_run):
+    cmd = ["pyocd", "reset", "-m", "hw", "--uid", uid,
+           "--cbuild-run", cbuild_run]
+    print("+", " ".join(cmd), "(background, not awaited)", flush=True)
+    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.STDOUT)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--uid", required=True, help="debug probe unique ID")
@@ -86,11 +103,11 @@ def main():
                  "/dev/serial/by-id; pass --port explicitly")
     print(f"Serial port: {port}", flush=True)
 
-    # Open the port before flashing: the target starts running the moment
-    # programming finishes, so this captures the run from the first byte.
+    # Open the port before flashing so nothing of the run is lost.
     fd = open_port(port)
     flash_target(args.uid, args.cbuild_run)
     termios.tcflush(fd, termios.TCIFLUSH)  # drop any pre-flash leftovers
+    reset_proc = hw_reset_async(args.uid, args.cbuild_run)
 
     deadline = time.monotonic() + args.timeout_minutes * 60
     last_data = time.monotonic()
@@ -98,6 +115,13 @@ def main():
     fails = []
     pending = b""
     stop_reason = None
+    # Restart detection: output seen / summary seen since the last boot
+    # marker. A marker arriving mid-run (output but no summary yet) means
+    # the reset kicked in - discard the partial pre-reset capture. A marker
+    # right after a summary is CM7_0 starting its own run - keep counting.
+    seg_output = False
+    seg_summary = False
+    last_summary = 0.0
 
     with open(args.log, "wb") as log:
         while len(summaries) < 2:
@@ -123,13 +147,36 @@ def main():
                 raw, pending = pending.split(b"\n", 1)
                 line = raw.decode("utf-8", errors="replace").rstrip("\r")
                 print(line, flush=True)
+                if BOOT_RE.search(line):
+                    # CM7_0 starts its run within a couple of seconds of
+                    # the CM0+ summary; a boot marker at any other point
+                    # is the hardware reset kicking in - discard whatever
+                    # the pre-reset boot produced.
+                    cm7_handoff = (seg_summary and
+                                   time.monotonic() - last_summary < 3.0)
+                    if (seg_output or summaries) and not cm7_handoff:
+                        print("[monitor] reboot detected, discarding "
+                              "pre-reset capture", flush=True)
+                        summaries = []
+                        fails = []
+                    seg_output = False
+                    seg_summary = False
+                if not line.startswith("Test_"):
+                    continue
+                seg_output = True
                 m = SUMMARY_RE.search(line)
                 if m:
                     summaries.append((int(m.group(1)), int(m.group(2)),
                                       m.group(3)))
+                    seg_summary = True
+                    last_summary = time.monotonic()
                 elif FAIL_RE.search(line):
                     fails.append(line)
     os.close(fd)
+    if reset_proc.poll() is None:
+        print("[monitor] killing still-running background pyocd reset",
+              flush=True)
+        reset_proc.kill()
 
     print()
     if stop_reason:
