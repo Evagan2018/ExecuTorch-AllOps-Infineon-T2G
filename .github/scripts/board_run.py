@@ -46,6 +46,10 @@ FAIL_RE = re.compile(r"Test_result: .* FAIL")
 # First entry of g_embedded_models[] on both cores (embedded_models.cpp):
 # each core's run starts with this line, so it marks a (re)boot.
 BOOT_RE = re.compile(r"Test_exec: adaptive_avg_pool2d\b")
+# Machine-readable line printed at the very end of each core's run, right
+# before its summary - proof that the run completed even if the summary
+# line itself got garbled.
+MEMREPORT_RE = re.compile(r"MemReport: method=")
 
 
 def find_port(uid):
@@ -214,6 +218,7 @@ def main():
     seg_output = False
     seg_summary = False
     last_summary = 0.0
+    last_memreport = 0.0
 
     with open(args.log, "wb") as log:
         while len(summaries) < 2:
@@ -251,11 +256,16 @@ def main():
                               "pyocd reset (whole process group)",
                               flush=True)
                     # CM7_0 starts its run within a couple of seconds of
-                    # the CM0+ summary; a boot marker at any other point
-                    # is the hardware reset kicking in - discard whatever
-                    # the pre-reset boot produced.
-                    cm7_handoff = (seg_summary and
-                                   time.monotonic() - last_summary < 3.0)
+                    # the CM0+ summary (or MemReport, if the summary line
+                    # got garbled during the UART hand-over); a boot
+                    # marker at any other point is the hardware reset
+                    # kicking in - discard whatever the pre-reset boot
+                    # produced.
+                    now_m = time.monotonic()
+                    cm7_handoff = (
+                        (seg_summary and now_m - last_summary < 3.0)
+                        or (last_memreport and
+                            now_m - last_memreport < 3.0))
                     if (seg_output or summaries) and not cm7_handoff:
                         print("[monitor] reboot detected, discarding "
                               "pre-reset capture", flush=True)
@@ -263,6 +273,8 @@ def main():
                         fails = []
                     seg_output = False
                     seg_summary = False
+                if MEMREPORT_RE.search(line):
+                    last_memreport = time.monotonic()
                 if not line.startswith("Test_"):
                     continue
                 seg_output = True

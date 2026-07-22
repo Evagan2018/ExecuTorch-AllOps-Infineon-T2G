@@ -35,6 +35,15 @@ __attribute__((constructor)) static void board_init(void) {
 void board_all_ops_done(void) {
   uint32_t value;
 
+  /* Let the final CM0+ output drain fully before releasing the M7: its
+   * image re-initialises the shared UART on startup, which clobbers any
+   * bytes still queued in the TX FIFO (the summary line arrived truncated
+   * as "Test_result: SUM" on the host). Wait for the shift register to go
+   * idle, then one character time of margin for the stop bit. */
+  while (!Cy_SCB_UART_IsTxComplete(scb_0_HW)) {
+  }
+  Cy_SysLib_DelayUs(200u);
+
   CPUSS->CM7_0_VECTOR_TABLE_BASE = CM7_0_APP_VECTOR_TABLE_BASE;
   CPUSS->CM7_0_PWR_CTL = (0x05FAu << CPUSS_UDB_PWR_CTL_VECTKEYSTAT_Pos) |
                          (3u << CPUSS_UDB_PWR_CTL_PWR_MODE_Pos);
