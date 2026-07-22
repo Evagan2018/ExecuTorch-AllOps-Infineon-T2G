@@ -18,26 +18,78 @@ name: Run T2G all-ops solution
 on:
 
   workflow_dispatch:
-  
+    inputs:
+      timeout_minutes:
+        description: "Maximum time to wait for both cores to finish (minutes)"
+        required: false
+        default: "40"
+
+  workflow_run:
+    workflows: ["Build T2G all-ops solution"]
+    types: [completed]
+    branches: [main]
+
+# The board is a single shared resource - never let two runs touch it at once.
+concurrency:
+  group: t2g-board
+  cancel-in-progress: false
+
 jobs:
   CI:
     runs-on: [self-hosted, rsp-p5-01]
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 60
+    env:
+      # TRAVEO T2G Body High Lite Kit with Dual-Cortex-M7 and Cortex-M0+
+      # (Entry Lite Kit with one Cortex-M4 and one Cortex-M0+: 171C089E02272400)
+      PROBE_UID: 0D18149E02272400
+      CBUILD_RUN: out/all_ops_t2g+T2G-Kit.cbuild-run.yml
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
 
-    - name: Download Build Artifact
+    - name: Download Build Artifact (latest successful build)
+      if: github.event_name != 'workflow_run'
       uses: dawidd6/action-download-artifact@v21
       with:
         workflow: build.yml
+        workflow_conclusion: success
         name: T2G-Kit-Release
         path: ./out
 
-    - name: Flash the binaries
-      working-directory: ./out
-      run: | 
-         # TRAVEO T2G Entry Lite Kit with one Cortex-M4 and one Cortex-M0+
-         # pyocd load --uid 171C089E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
-         # TRAVEO T2G Body High Lite Kit with Dual-Cortex-M7 and Cortex-M0+
-         pyocd load --uid 0D18149E02272400 --cbuild-run all_ops_t2g+T2G-Kit.cbuild-run.yml
+    - name: Download Build Artifact (triggering build)
+      if: github.event_name == 'workflow_run'
+      uses: dawidd6/action-download-artifact@v21
+      with:
+        run_id: ${{ github.event.workflow_run.id }}
+        name: T2G-Kit-Release
+        path: ./out
+
+    - name: Check the debug probe is connected
+      run: |
+        pyocd list
+        pyocd list | grep -q "$PROBE_UID" || {
+          echo "::error::KitProg3 probe $PROBE_UID not found on this runner"
+          exit 1
+        }
+
+    # The script opens the serial port, flashes both images, restarts the
+    # device with a hardware reset (needed for the CM0+ -> CM7_0 hand-off;
+    # fired in the background because pyOCD tends to hang reconnecting
+    # afterwards), captures the output of both cores and judges the result.
+    - name: Flash, run the test and check the serial output
+      run: |
+        python3 .github/scripts/board_run.py \
+          --uid "$PROBE_UID" \
+          --cbuild-run "$CBUILD_RUN" \
+          --timeout-minutes "${{ inputs.timeout_minutes || 40 }}" \
+          --log serial.log
+
+    - name: Upload serial log
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: serial-log
+        path: serial.log
+        if-no-files-found: ignore
